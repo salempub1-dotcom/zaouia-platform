@@ -1,7 +1,8 @@
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
-from django.http import Http404, HttpResponse
+from django.db.models import Count, F, Q
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -9,13 +10,13 @@ from apps.dorouss import selectors
 from apps.dorouss.filters import ContentFilter
 from apps.dorouss.models import Content, ContentType
 from apps.interactions.models import DownloadHistory, Favorite, ViewHistory
-from apps.interactions.services import toggle_favorite, touch_history
+from apps.interactions.services import save_progress, toggle_favorite, touch_history
 from apps.scholars.models import Scholar
 from apps.taxonomy.models import Category, Occasion
 from apps.core.models import Banner, SiteSettings
 from apps.core.request import client_ip, viewer_key
 
-from .forms import ContactForm
+from .forms import ContactForm, LoginForm, RegisterForm
 
 
 def _paginate(request, queryset, size=18):
@@ -130,6 +131,62 @@ def account(request):
         "downloads": DownloadHistory.objects.filter(user=request.user).select_related("content")[:8],
         "notifications": request.user.notifications.select_related("content")[:8],
     })
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("web:account")
+    form = LoginForm(request, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        return redirect(request.POST.get("next") or request.GET.get("next") or "web:account")
+    return render(request, "web/auth/login.html", {"form": form, "next": request.GET.get("next", "")})
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect("web:account")
+    form = RegisterForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        login(request, user)
+        return redirect("web:account")
+    return render(request, "web/auth/register.html", {"form": form})
+
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    return redirect("web:home")
+
+
+@require_POST
+def progress(request, slug):
+    content = get_object_or_404(Content.objects.published(), slug=slug)
+    try:
+        position = int(request.POST.get("position", 0))
+        total = int(request.POST.get("total", 0))
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "بيانات التقدم غير صحيحة."}, status=400)
+    history = save_progress(content, request, position=position, total=total)
+    return JsonResponse({"ok": True, "progress_percent": history.progress_percent})
+
+
+def download(request, slug):
+    content = get_object_or_404(Content.objects.published(), slug=slug, allow_download=True)
+    try:
+        document = content.pdf_document
+    except Content.pdf_document.RelatedObjectDoesNotExist:
+        document = None
+    file_field = document.file if document and document.file else content.media_file
+    if not file_field:
+        raise Http404("لا يوجد ملف قابل للتحميل")
+    DownloadHistory.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        content=content,
+    )
+    Content.objects.filter(pk=content.pk).update(downloads_count=F("downloads_count") + 1)
+    return FileResponse(file_field.open("rb"), as_attachment=True, filename=file_field.name.rsplit("/", 1)[-1])
 
 
 def search_suggest(request):

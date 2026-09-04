@@ -15,3 +15,14 @@ def touch_history(content,request):
         if not request.session.session_key:request.session.save()
         lookup={"user":None,"session_key":request.session.session_key,"content":content}
     return ViewHistory.objects.get_or_create(**lookup)[0]
+
+
+def save_progress(content, request, *, position, total=0, completed=False):
+    history = touch_history(content, request)
+    history.last_position = max(0, int(position))
+    if total:
+        history.total = max(0, int(total))
+        history.progress_percent = min(100, int(history.last_position * 100 / history.total))
+    history.completed = bool(completed or history.progress_percent >= 95)
+    history.save(update_fields=["last_position", "total", "progress_percent", "completed", "last_viewed_at"])
+    return history
