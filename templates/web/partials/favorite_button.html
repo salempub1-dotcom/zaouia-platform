@@ -1,0 +1,1 @@
+<button class="favorite {% if is_favorited %}active{% endif %}" hx-post="{% url 'web:favorite_toggle' content.slug %}" hx-swap="outerHTML" aria-label="المفضلة">{% csrf_token %}{% if is_favorited %}♥ محفوظ في المفضلة{% else %}♡ أضف إلى المفضلة{% endif %}</button>

@@ -1,0 +1,2 @@
+<div class="results-head"><p>تم العثور على <strong>{{ page_obj.paginator.count }}</strong> محتوى</p></div>
+{% if page_obj %}<div class="cards-grid">{% for item in page_obj %}{% include 'web/partials/content_card.html' %}{% empty %}<div class="empty"><span>⌕</span><h3>لم نعثر على نتائج</h3><p>جرّب كلمة أقصر أو غيّر أحد الفلاتر.</p></div>{% endfor %}</div>{% include 'web/partials/pagination.html' %}{% endif %}

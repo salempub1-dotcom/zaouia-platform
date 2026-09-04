@@ -1,0 +1,1 @@
+{% extends 'web/base.html' %}{% block content %}<section class="page-head shell"><span>عن الزاوية</span><h1>{{ settings_obj.site_name }}</h1></section><article class="prose shell about-prose">{{ settings_obj.about_full|default:settings_obj.about_short|linebreaks }}{% if settings_obj.address %}<h2>موقعنا</h2><p>{{ settings_obj.address }}</p>{% endif %}</article>{% endblock %}

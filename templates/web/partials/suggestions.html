@@ -1,0 +1,1 @@
+{% if suggestions %}<div class="suggestions">{% for s in suggestions %}<a href="{% url 'web:content_detail' s.slug %}"><span>{{ s.title }}</span><small>{{ s.content_type }}</small></a>{% endfor %}</div>{% endif %}

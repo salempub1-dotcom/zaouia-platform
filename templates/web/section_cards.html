@@ -1,0 +1,1 @@
+{% if items %}<section class="section shell"><div class="section-title"><div><span>{{ eyebrow }}</span><h2>{{ title }}</h2></div><a href="{% url 'web:contents' %}">عرض المزيد ←</a></div><div class="cards-grid horizontal-mobile">{% for item in items %}{% include 'web/partials/content_card.html' %}{% endfor %}</div></section>{% endif %}

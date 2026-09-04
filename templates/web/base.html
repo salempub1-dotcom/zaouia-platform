@@ -1,0 +1,24 @@
+{% load static %}<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#092b22">
+  <title>{% block title %}{{ site_settings.site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}منصة الزاوية البلقائدية الهبرية للدروس والمحاضرات والكتب والصوتيات{% endblock %}">
+  <link rel="manifest" href="{% url 'web:manifest' %}"><link rel="stylesheet" href="{% static 'web/css/app.css' %}">
+  <script defer src="https://unpkg.com/htmx.org@2.0.4"></script><script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body x-data="{drawer:false}" @keydown.escape.window="drawer=false">
+<a class="skip" href="#main">انتقل إلى المحتوى</a>
+<header class="topbar"><div class="shell nav-wrap">
+  <a class="brand" href="{% url 'web:home' %}">{% if site_settings.logo %}<img src="{{ site_settings.logo.url }}" alt="">{% endif %}<span><b>{{ site_settings.site_name }}</b><small>منصة العلم والتراث</small></span></a>
+  <nav class="desktop-nav" aria-label="التنقل الرئيسي"><a href="{% url 'web:home' %}">الرئيسية</a><a href="{% url 'web:contents' %}">المكتبة</a><a href="{% url 'web:pdf_library' %}">الكتب وPDF</a><a href="{% url 'web:scholars' %}">المشايخ</a><a href="{% url 'web:about' %}">عن الزاوية</a></nav>
+  <button class="icon-btn menu-btn" @click="drawer=true" aria-label="فتح القائمة">☰</button>
+</div></header>
+<div class="drawer-backdrop" x-show="drawer" x-transition.opacity @click="drawer=false"></div>
+<aside class="drawer" :class="drawer&&'open'" aria-label="القائمة"><button class="icon-btn" @click="drawer=false">×</button><a href="/">الرئيسية</a><a href="/contents/">المكتبة</a><a href="/pdf/">الكتب وPDF</a><a href="/scholars/">المشايخ</a><a href="/about/">عن الزاوية</a><a href="/contact/">اتصل بنا</a></aside>
+<main id="main">{% block content %}{% endblock %}</main>
+<footer><div class="shell footer-grid"><div><h3>{{ site_settings.site_name }}</h3><p>{{ site_settings.about_short|default:'منصة رقمية لحفظ ونشر التراث العلمي والديني للزاوية.' }}</p></div><div><h4>روابط سريعة</h4><a href="/contents/">جميع المحتويات</a><a href="/pdf/">مكتبة PDF</a><a href="/contact/">اتصل بنا</a></div><div><h4>تابعنا</h4>{% if site_settings.youtube_url %}<a href="{{ site_settings.youtube_url }}">YouTube</a>{% endif %}{% if site_settings.facebook_url %}<a href="{{ site_settings.facebook_url }}">Facebook</a>{% endif %}</div></div></footer>
+<nav class="bottom-nav" aria-label="تنقل الهاتف"><a href="/">⌂<span>الرئيسية</span></a><a href="/contents/">▦<span>الأقسام</span></a><a href="/contents/?focus=search">⌕<span>بحث</span></a><a href="/pdf/">▤<span>المكتبة</span></a><a href="/account/">♙<span>حسابي</span></a></nav>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}</script>{% block scripts %}{% endblock %}
+</body></html>

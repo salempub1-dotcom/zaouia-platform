@@ -1,0 +1,8 @@
+{% extends 'web/base.html' %}{% block content %}
+<section class="hero"><div class="hero-glow"></div><div class="shell hero-grid"><div><span class="eyebrow">العلم • التربية • السلوك</span><h1>تراث الزاوية بين يديك،<br><em>في مكان واحد</em></h1><p>{{ site_settings.about_short|default:'استمع إلى الدروس والمحاضرات، واقرأ الكتب والإصدارات، وواصل من حيث توقفت.' }}</p><form class="hero-search" action="{% url 'web:contents' %}"><input name="q" placeholder="ابحث عن درس، محاضرة، كتاب أو شيخ…" aria-label="بحث"><button>بحث</button></form><div class="hero-actions"><a class="btn primary" href="{% url 'web:contents' %}">استكشف المكتبة</a><a class="btn ghost" href="{% url 'web:pdf_library' %}">تصفح الكتب</a></div></div><div class="hero-mark" aria-hidden="true"><div class="arch">۞</div><p>الزاوية البلقائدية الهبرية</p></div></div></section>
+{% if categories %}<section class="section shell"><div class="section-title"><div><span>تصفّح بسهولة</span><h2>أقسام المنصة</h2></div><a href="/contents/">عرض الكل ←</a></div><div class="category-grid">{% for category in categories %}<a href="/contents/?category={{ category.slug }}"><b>{{ category.icon|default:'✦' }}</b><span>{{ category.name }}</span></a>{% endfor %}</div></section>{% endif %}
+{% include 'web/section_cards.html' with title='مختارات الزاوية' eyebrow='محتوى مميز' items=featured %}
+{% include 'web/section_cards.html' with title='أحدث الدروس والمحاضرات' eyebrow='جديد المنصة' items=latest_lessons %}
+{% include 'web/section_cards.html' with title='مكتبة الكتب وPDF' eyebrow='للقراءة والتحميل' items=latest_pdfs %}
+{% include 'web/section_cards.html' with title='استمع الآن' eyebrow='الصوتيات والأمداح' items=latest_audio %}
+{% endblock %}

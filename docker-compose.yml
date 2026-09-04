@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: zaouia
+      POSTGRES_USER: zaouia
+      POSTGRES_PASSWORD: zaouia
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zaouia"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+  web:
+    build: {context: ., dockerfile: docker/Dockerfile}
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
+    volumes: [".:/app"]
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_started}
+  worker:
+    build: {context: ., dockerfile: docker/Dockerfile}
+    command: celery -A config worker -l info --concurrency=2
+    env_file: .env
+    volumes: [".:/app"]
+    depends_on: [db, redis]
+volumes: {pgdata: {}}
