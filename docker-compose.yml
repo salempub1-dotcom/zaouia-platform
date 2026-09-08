@@ -9,9 +9,18 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U zaouia"]
       interval: 5s
+      timeout: 5s
       retries: 10
+
   redis:
     image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   web:
     build: {context: ., dockerfile: docker/Dockerfile}
     command: python manage.py runserver 0.0.0.0:8000
@@ -20,11 +29,29 @@ services:
     ports: ["8000:8000"]
     depends_on:
       db: {condition: service_healthy}
-      redis: {condition: service_started}
+      redis: {condition: service_healthy}
+
   worker:
     build: {context: ., dockerfile: docker/Dockerfile}
     command: celery -A config worker -l info --concurrency=2
     env_file: .env
+    environment:
+      RUN_MIGRATIONS: "0"
     volumes: [".:/app"]
-    depends_on: [db, redis]
-volumes: {pgdata: {}}
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  beat:
+    build: {context: ., dockerfile: docker/Dockerfile}
+    command: celery -A config beat -l info
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "0"
+    volumes: [".:/app"]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+volumes:
+  pgdata:
