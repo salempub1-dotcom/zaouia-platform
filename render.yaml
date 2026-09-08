@@ -1,22 +1,13 @@
 services:
-  - type: keyvalue
-    name: zaouia-redis
-    region: frankfurt
-    plan: 256mb
-    ipAllowList: []
-    maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
-
   - type: web
     name: zaouia-web
     runtime: docker
     region: frankfurt
-    plan: 0.5c-512mb
+    plan: free
     dockerfilePath: ./docker/Dockerfile
     dockerContext: .
     autoDeployTrigger: checksPass
     healthCheckPath: /health/
-    maxShutdownDelaySeconds: 60
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.production
@@ -26,59 +17,17 @@ services:
         fromDatabase:
           name: zaouia-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: zaouia-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: keyvalue
-          name: zaouia-redis
-          property: connectionString
+      - key: USE_REDIS
+        value: "false"
       - key: RUN_MIGRATIONS
         value: "1"
-      - key: STORAGE_BACKEND
-        value: local
-
-  - type: worker
-    name: zaouia-worker
-    runtime: docker
-    region: frankfurt
-    plan: 0.5c-512mb
-    dockerfilePath: ./docker/Dockerfile
-    dockerContext: .
-    dockerCommand: celery -A config worker -B --loglevel info --concurrency 2
-    autoDeployTrigger: checksPass
-    maxShutdownDelaySeconds: 120
-    envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings.production
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: zaouia-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: zaouia-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: keyvalue
-          name: zaouia-redis
-          property: connectionString
-      - key: RUN_MIGRATIONS
-        value: "0"
       - key: STORAGE_BACKEND
         value: local
 
 databases:
   - name: zaouia-db
     region: frankfurt
-    plan: 0.1c-256mb
+    plan: free
     postgresMajorVersion: "16"
     databaseName: zaouia
     user: zaouia
