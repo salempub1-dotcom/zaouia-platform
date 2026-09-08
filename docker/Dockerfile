@@ -10,5 +10,5 @@ RUN chmod +x docker/entrypoint.sh \
     && mkdir -p media staticfiles \
     && chown -R app:app /app
 USER app
-ENTRYPOINT ["docker/entrypoint.sh"]
+ENTRYPOINT ["sh","docker/entrypoint.sh"]
 CMD ["gunicorn","config.wsgi:application","-b","0.0.0.0:8000","-w","3","--timeout","120"]
