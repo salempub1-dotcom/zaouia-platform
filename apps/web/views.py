@@ -1,6 +1,8 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.core.paginator import Paginator
+from django.db import connection
 from django.db.models import Count, F, Q
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -206,3 +208,20 @@ def service_worker(request):
     response = render(request, "web/sw.js", content_type="application/javascript")
     response["Service-Worker-Allowed"] = "/"
     return response
+
+
+def health(request):
+    """Readiness probe for the database and Redis cache."""
+    checks = {"database": False, "cache": False}
+    try:
+        connection.ensure_connection()
+        checks["database"] = True
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        cache.set("health-check", "ok", timeout=10)
+        checks["cache"] = cache.get("health-check") == "ok"
+    except Exception:  # noqa: BLE001
+        pass
+    status = 200 if all(checks.values()) else 503
+    return JsonResponse({"status": "ok" if status == 200 else "degraded", "checks": checks}, status=status)
