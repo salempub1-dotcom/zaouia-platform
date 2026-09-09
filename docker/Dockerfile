@@ -24,5 +24,13 @@ RUN chmod +x docker/entrypoint.sh \
 
 USER app
 
+# Static collection needs no live database or deployment secrets.
+# These values apply only to this build command, never to the running container.
+RUN DJANGO_SETTINGS_MODULE=config.settings.production \
+    SECRET_KEY=static-assets-build-only \
+    DATABASE_URL=sqlite:////tmp/static-build.sqlite3 \
+    USE_REDIS=false \
+    python manage.py collectstatic --noinput
+
 ENTRYPOINT ["sh", "docker/entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-"]
